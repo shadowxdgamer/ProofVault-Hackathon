@@ -20,42 +20,59 @@ interface EvalResult {
     quadrant: 'WOW' | 'NOW' | 'HOW' | 'CIAO';
 }
 
-function App() {
-    // FAKE VAULT PAGE FOR DEMO
-    if (window.location.pathname.startsWith('/vault/')) {
-        const vaultId = window.location.pathname.split('/').pop();
-        return (
-            <div className="font-body-md text-body-md min-h-screen pb-12 flex flex-col items-center justify-center p-6 bg-surface-container-lowest">
-               <div className="bg-surface border border-outline-variant rounded-xl p-8 max-w-md w-full shadow-2xl">
-                   <h1 className="text-headline-md text-primary font-bold mb-4 flex items-center gap-2">
-                       <Landmark size={28} /> GRAVV Escrow Vault
-                   </h1>
-                   <p className="text-on-surface-variant mb-6 text-sm font-mono-data">Vault ID: {vaultId}</p>
-                   
-                   <div className="bg-surface-container-lowest p-4 rounded mb-6 border border-outline-variant">
-                       <div className="flex justify-between mb-2 pb-2 border-b border-outline-variant/50">
-                           <span className="text-on-surface-variant">Funding Goal</span>
-                           <span className="text-primary font-bold font-mono-data">500 USDC</span>
-                       </div>
-                       <div className="flex justify-between">
-                           <span className="text-on-surface-variant">Status</span>
+function VaultPage({ vaultId }: { vaultId: string }) {
+    const [deposited, setDeposited] = useState(false);
+
+    return (
+        <div className="font-body-md text-body-md min-h-screen pb-12 flex flex-col items-center justify-center p-6 bg-surface-container-lowest">
+           <div className="bg-surface border border-outline-variant rounded-xl p-8 max-w-md w-full shadow-2xl">
+               <h1 className="text-headline-md text-primary font-bold mb-4 flex items-center gap-2">
+                   <Landmark size={28} /> GRAVV Escrow Vault
+               </h1>
+               <p className="text-on-surface-variant mb-6 text-sm font-mono-data">Vault ID: {vaultId}</p>
+               
+               <div className="bg-surface-container-lowest p-4 rounded mb-6 border border-outline-variant transition-all">
+                   <div className="flex justify-between mb-2 pb-2 border-b border-outline-variant/50">
+                       <span className="text-on-surface-variant">Funding Goal</span>
+                       <span className="text-primary font-bold font-mono-data">500 USDC</span>
+                   </div>
+                   <div className="flex justify-between">
+                       <span className="text-on-surface-variant">Status</span>
+                       {deposited ? (
+                           <span className="text-primary font-bold flex items-center gap-1">
+                               <CheckCircle size={16} /> Deposited
+                           </span>
+                       ) : (
                            <span className="text-secondary font-bold flex items-center gap-1">
                                <Loader2 size={16} className="spin" /> Awaiting Deposit
                            </span>
-                       </div>
+                       )}
                    </div>
-                   
-                   <button 
-                       className="w-full bg-primary text-on-primary font-bold font-label-caps uppercase tracking-widest py-4 rounded glow-emerald hover:bg-primary-fixed transition-all cursor-pointer" 
-                       onClick={() => alert('Mock Payment Successful! Funds locked in escrow.')}
-                   >
-                       Deposit 500 USDC
-                   </button>
-                   
-                   <p className="text-xs text-center text-on-surface-variant mt-4">Powered by @gravvfi/mcp</p>
                </div>
-            </div>
-        );
+               
+               <button 
+                   disabled={deposited}
+                   className={`w-full font-bold font-label-caps uppercase tracking-widest py-4 rounded transition-all cursor-pointer ${
+                       deposited 
+                       ? 'bg-surface-container-high text-on-surface-variant cursor-not-allowed' 
+                       : 'bg-primary text-on-primary glow-emerald hover:bg-primary-fixed'
+                   }`}
+                   onClick={() => setDeposited(true)}
+               >
+                   {deposited ? 'Funds Secured' : 'Deposit 500 USDC'}
+               </button>
+               
+               <p className="text-xs text-center text-on-surface-variant mt-4">Powered by @gravvfi/mcp</p>
+           </div>
+        </div>
+    );
+}
+
+function App() {
+    // FAKE VAULT PAGE FOR DEMO
+    if (window.location.pathname.startsWith('/vault/')) {
+        const vaultId = window.location.pathname.split('/').pop() || '';
+        return <VaultPage vaultId={vaultId} />;
     }
 
     const [evalState, setEvalState] = useState<EvalState>('idle');
@@ -107,20 +124,14 @@ function App() {
     };
 
     const createGravvfiVault = async (title: string, desc: string): Promise<string> => {
-        const response = await fetch('/api/gravv/vault', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ title, description: desc })
+        // Since we are deploying to Netlify immediately and don't have time to deploy the Node backend,
+        // we simulate the backend response right here in the frontend.
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const randomId = Math.random().toString(36).substring(2, 9);
+                resolve(window.location.origin + `/vault/simulated-${randomId}`);
+            }, 1500);
         });
-        
-        if (!response.ok) {
-            throw new Error(`Backend error: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        return data.link;
     };
 
     const handleEvaluate = async (e: React.FormEvent) => {

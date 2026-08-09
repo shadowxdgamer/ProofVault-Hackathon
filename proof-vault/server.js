@@ -13,7 +13,7 @@ async function getMcpClient() {
   if (mcpClient) return mcpClient;
 
   // Use the API key if provided by the user in their environment
-  const apiKey = process.env.GRAVV_API_KEY || '';
+  const apiKey = process.env.GRAVV_API_KEY || 'grvSec_sandbox_c74b3cbf5a00457693226a839221fc0fc74b3cbf5a00akVTbp';
 
   const transport = new StdioClientTransport({
     command: "npx",
@@ -42,41 +42,52 @@ app.post('/api/gravv/vault', async (req, res) => {
     const client = await getMcpClient();
     const toolsResult = await client.listTools();
     
-    // Fallback if the user hasn't set their GRAVV_API_KEY, the MCP will only return doc tools.
-    if (!process.env.GRAVV_API_KEY) {
-      console.warn("No GRAVV_API_KEY provided. Returning simulated payment link.");
-      const randomId = Math.random().toString(36).substring(2, 9);
-      return res.json({ 
-        success: true, 
-        link: `http://localhost:5173/vault/simulated-${randomId}`,
-        message: "Simulated due to missing GRAVV_API_KEY"
-      });
-    }
-
-    // Try to find the escrow or vault creation tool
+    // Proceed with the tools
     const tools = toolsResult.tools || [];
-    const targetTool = tools.find(t => 
-      t.name.toLowerCase().includes('escrow') || 
-      t.name.toLowerCase().includes('vault') ||
-      t.name.toLowerCase().includes('create')
-    );
+    const targetTool = tools.find(t => t.name === 'createPaymentLink');
 
     if (targetTool) {
-      // Call the tool with sensible defaults based on the pitch
+      // Get an account
+      const accountsRes = await client.callTool({ name: 'listAccounts', arguments: {} });
+      const accountsJson = JSON.parse(accountsRes.content[0].text);
+      const firstAccount = accountsJson.data?.items?.[0];
+      
+      const accountId = firstAccount?.id;
+      let customerId = firstAccount?.customer_id;
+
+      if (!accountId) {
+        throw new Error("Could not find a valid account in the sandbox to attach the payment link to.");
+      }
+
+      if (!customerId) {
+        const customersRes = await client.callTool({ name: 'listCustomers', arguments: {} });
+        const customersJson = JSON.parse(customersRes.content[0].text);
+        customerId = customersJson.data?.items?.[0]?.id;
+      }
+
+      if (!customerId) {
+        throw new Error("Could not find a valid customer in the sandbox.");
+      }
+
+      // Call the tool to create a payment link
       const result = await client.callTool({
         name: targetTool.name,
         arguments: {
-          project_title: title,
-          description: description,
-          amount: 500, // Example funding goal
-          currency: "USDC"
+          payer_name: title || "Startup Pitch Sponsor",
+          settlement_account_id: accountId,
+          supported_networks: ["polygon"],
+          customer_id: customerId
         }
       });
       
+      // Extract the returned link_url
+      const resultData = JSON.parse(result.content[0].text);
+      const linkUrl = resultData.link_url || `http://localhost:5173/vault/generated-via-mcp`;
+
       return res.json({ 
         success: true, 
         result: result,
-        link: `http://localhost:5173/vault/generated-via-mcp`
+        link: linkUrl
       });
     } else {
       // Fallback if tool isn't found
