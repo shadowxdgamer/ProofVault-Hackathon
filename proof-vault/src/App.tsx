@@ -123,7 +123,7 @@ function App() {
         }
     };
 
-    const createGravvfiVault = async (title: string, desc: string): Promise<string> => {
+    const createGravvfiVault = async (_title: string, _desc: string): Promise<string> => {
         // Since we are deploying to Netlify immediately and don't have time to deploy the Node backend,
         // we simulate the backend response right here in the frontend.
         return new Promise((resolve) => {
