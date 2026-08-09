@@ -69,14 +69,21 @@ function App() {
         }
     };
 
-    const createGravvfiVault = async (): Promise<string> => {
-        // This simulates a call to the @gravvfi/mcp integration
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const randomId = Math.random().toString(36).substring(2, 9);
-                resolve(`https://pay.gravv.fi/vault/${randomId}`);
-            }, 1500);
+    const createGravvfiVault = async (title: string, desc: string): Promise<string> => {
+        const response = await fetch('/api/gravv/vault', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ title, description: desc })
         });
+        
+        if (!response.ok) {
+            throw new Error(`Backend error: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        return data.link;
     };
 
     const handleEvaluate = async (e: React.FormEvent) => {
@@ -109,7 +116,7 @@ function App() {
 
             // STEP 2: Autonomous Payment (GRAVV MCP)
             if (evalRes.quadrant === 'WOW') {
-                const link = await createGravvfiVault();
+                const link = await createGravvfiVault(title, description);
                 setPaymentLink(link);
             }
             
