@@ -48,7 +48,7 @@ app.post('/api/gravv/vault', async (req, res) => {
       const randomId = Math.random().toString(36).substring(2, 9);
       return res.json({ 
         success: true, 
-        link: `https://pay.gravv.fi/vault/simulated-${randomId}`,
+        link: `http://localhost:5173/vault/simulated-${randomId}`,
         message: "Simulated due to missing GRAVV_API_KEY"
       });
     }
@@ -76,14 +76,14 @@ app.post('/api/gravv/vault', async (req, res) => {
       return res.json({ 
         success: true, 
         result: result,
-        link: `https://pay.gravv.fi/vault/generated-via-mcp`
+        link: `http://localhost:5173/vault/generated-via-mcp`
       });
     } else {
       // Fallback if tool isn't found
       const randomId = Math.random().toString(36).substring(2, 9);
       return res.json({ 
         success: true, 
-        link: `https://pay.gravv.fi/vault/${randomId}`,
+        link: `http://localhost:5173/vault/${randomId}`,
         message: "MCP Tool not found, falling back to simulated link."
       });
     }

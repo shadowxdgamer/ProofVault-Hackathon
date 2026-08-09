@@ -21,6 +21,43 @@ interface EvalResult {
 }
 
 function App() {
+    // FAKE VAULT PAGE FOR DEMO
+    if (window.location.pathname.startsWith('/vault/')) {
+        const vaultId = window.location.pathname.split('/').pop();
+        return (
+            <div className="font-body-md text-body-md min-h-screen pb-12 flex flex-col items-center justify-center p-6 bg-surface-container-lowest">
+               <div className="bg-surface border border-outline-variant rounded-xl p-8 max-w-md w-full shadow-2xl">
+                   <h1 className="text-headline-md text-primary font-bold mb-4 flex items-center gap-2">
+                       <Landmark size={28} /> GRAVV Escrow Vault
+                   </h1>
+                   <p className="text-on-surface-variant mb-6 text-sm font-mono-data">Vault ID: {vaultId}</p>
+                   
+                   <div className="bg-surface-container-lowest p-4 rounded mb-6 border border-outline-variant">
+                       <div className="flex justify-between mb-2 pb-2 border-b border-outline-variant/50">
+                           <span className="text-on-surface-variant">Funding Goal</span>
+                           <span className="text-primary font-bold font-mono-data">500 USDC</span>
+                       </div>
+                       <div className="flex justify-between">
+                           <span className="text-on-surface-variant">Status</span>
+                           <span className="text-secondary font-bold flex items-center gap-1">
+                               <Loader2 size={16} className="spin" /> Awaiting Deposit
+                           </span>
+                       </div>
+                   </div>
+                   
+                   <button 
+                       className="w-full bg-primary text-on-primary font-bold font-label-caps uppercase tracking-widest py-4 rounded glow-emerald hover:bg-primary-fixed transition-all cursor-pointer" 
+                       onClick={() => alert('Mock Payment Successful! Funds locked in escrow.')}
+                   >
+                       Deposit 500 USDC
+                   </button>
+                   
+                   <p className="text-xs text-center text-on-surface-variant mt-4">Powered by @gravvfi/mcp</p>
+               </div>
+            </div>
+        );
+    }
+
     const [evalState, setEvalState] = useState<EvalState>('idle');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
